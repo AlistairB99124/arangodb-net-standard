@@ -172,7 +172,6 @@ namespace ArangoDBNetStandardTest.GraphApi
             var response = await _client.GetGraphEdgeCollectionsAsync(_fixture.TestGraph);
             Assert.Equal(HttpStatusCode.OK, response.Code);
             Assert.NotEmpty(response.Collections);
-            Assert.False(response.Error);
         }
 
         [Fact]
@@ -182,6 +181,50 @@ namespace ArangoDBNetStandardTest.GraphApi
             {
                 await _client.GetGraphEdgeCollectionsAsync("bogus_graph");
             });
+            Assert.Equal(HttpStatusCode.NotFound, exception.ApiError.Code);
+            Assert.Equal(1924, exception.ApiError.ErrorNum); // GRAPH_NOT_FOUND
+        }
+        
+        [Fact]
+        public async Task PostGraphEdgeAsync_ShouldSucceed()
+        {
+            await _fixture.ArangoDBClient.Graph.PostGraph(new PostGraphBody
+            {
+                Name = "temp_graph",
+                EdgeDefinitions = new List<EdgeDefinition>
+                {
+                    new EdgeDefinition
+                    {
+                        From = new string[] { "fromclx" },
+                        To = new string[] { "toclx" },
+                        Collection = "clx"
+                    }
+                }
+            });
+            var response = await _client.PostGraphEdgeAsync("temp_graph", "clx", new PostGraphEdgeBody
+            {
+                _from = "fromclx",
+                _to = "toclx"
+            }, new PostGraphEdgeQuery
+            {
+                ReturnNew = true,
+                WaitForSync = false
+            });
+            Assert.Equal(HttpStatusCode.Accepted, response.Code);
+            Assert.False(response.Error);
+        }       
+
+        [Fact]
+        public async Task PostGraphEdgeAsync_ShouldThrow_WhenNotFound()
+        {
+            var exception = await Assert.ThrowsAsync<ApiErrorException>(async () =>
+            {
+                await _client.PostGraphEdgeAsync("boggus_graph", "clx", new PostGraphEdgeBody
+                {
+                    _from = "fromclx",
+                    _to = "toclx"
+                });
+            });            
             Assert.Equal(HttpStatusCode.NotFound, exception.ApiError.Code);
             Assert.Equal(1924, exception.ApiError.ErrorNum); // GRAPH_NOT_FOUND
         }
