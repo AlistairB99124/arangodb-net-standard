@@ -326,5 +326,14 @@ namespace ArangoDBNetStandardTest.GraphApi
             Assert.Equal(HttpStatusCode.NotFound, apiError.Code);
             Assert.Equal(1924, apiError.ErrorNum); // ERROR_GRAPH_NOT_FOUND
         }
+
+        [Fact]
+        public async Task GetVerticesAsync_ShouldSucceed()
+        {
+            var graphName = nameof(GetVerticesAsync_ShouldSucceed);
+            var response = await _client.GetVerticesAsync(graphName);
+
+            Assert.Equal(HttpStatusCode.OK, response.Code);
+        }
     }
 }
